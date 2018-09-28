@@ -1,0 +1,1 @@
+select worksite,Tcity,year from(Select rank() over(partition by year order by Tcity desc)as rank_1,worksite,Tcity,year from(Select count(worksite)as Tcity,worksite,year from h1b_final where case_status="CERTIFIED" or case_status="CERTIFIED-WITHDRAWN" group by worksite,year) a)b where rank_1<6 and year is not null;

@@ -1,0 +1,501 @@
+create table employee(
+id int, name string)
+row format delimited
+fields terminated by '|'
+ stored as textfile;
+ 
+ 
+ gedit employee.txt
+16|john
+17|robert
+18|andrew
+19|katty
+21|tom
+22|tim
+23|james
+24|paul
+27|edward
+29|alan
+31|kerry
+34|venu
+ load data local inpath '/home/hadoop/Documents/Training/data/employee.txt' into table employee;
+
+ If you want to create other type of tables use this staging table.
+ 
+ create table employee_seq(
+id int, name string)
+row format delimited
+fields terminated by '|'
+stored as SEQUENCEFILE;
+
+insert into employee_seq
+select * from employee;
+
+select * from employee_seq;
+
+////////////////////////////
+create table employee_orc(
+id int, name string)
+row format delimited
+fields terminated by '|'
+stored as ORC;
+
+insert into table employee_orc
+select * from employee;
+
+select * from employee_orc;
+//////////////////////
+create table employee_par(
+id int, name string)
+row format delimited
+fields terminated by '|'
+stored as PARQUET;
+
+insert into table employee_par
+select * from employee;
+
+select * from employee_par;
+
+
+////Processing JSON data in Hive using JSON SerDe///
+https://github.com/sheetaldolas/Hive-JSON-Serde/blob/master/dist/json-serde-1.1.9.9-Hive1.2.jar
+
+gedit products.json
+{"name":"iPhone 6", "price": 600, "category" :"phone", "color": "gold", "stock": 10, "tags" : ["phone", "iphone", "cell"] }
+{"name":"iPhone 6 plus", "price": 660, "category" :"phone", "color": "silver", "stock": 20, "tags" : ["phone", "iphone", "cell"] }
+{"name":"Samsung S6", "price": 600, "category" :"phone", "color": "white", "stock": 10, "tags" : ["phone", "samsung", "cell"] }
+{"name":"Macbook Pro", "price": 800, "category" :"computer", "color": "silver", "stock": 8, "tags" : ["laptop", "apple"] }
+{"name":"Samsung Refrigerator 13 Ltr", "price": 400, "category" :"fridge", "color": "red", "stock": 10, "tags" : ["fridge", "samsung"] }
+
+hadoop fs –mkdir /data/products
+hadoop fs –copyFromLocalproducts.json /data/products
+
+ADD JAR json-serde-1.1.9.9-Hive1.2.jar;
+
+CREATE TABLE products_json (
+name STRING,
+price DOUBLE,
+category STRING,
+color STRING,
+stock INT,
+tags ARRAY<STRING>)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
+LOCATION '/data/products';
+
+select * from products_json;
+SELECT category, count(*) FROM products_json GROUP BY category;
+
+
+///JSON SerDe supports nested JSON as well.
+{
+    "name": "iPhone 6",
+    "price": 600,
+    "category": "phone",
+    "color": "gold",
+    "stock": 10,
+    "tags": ["phone", "iphone", "cell"],
+    "features": {
+        "storage": "64GB",
+        "battery": "15Hrs",
+        "warranty": "1 Yr"
+    }
+}
+
+CREATE TABLE products_json (
+name STRING,
+price DOUBLE,
+category STRING,
+color STRING,
+stock INT,
+tags ARRAY<STRING>,
+features STRUCT<
+storage:STRING,
+battery:STRING,
+warranty:STRING>)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
+LOCATION '/data/products';
+
+///////////////////
+wget http://search.maven.org/remotecontent?filepath=com/ibm/spss/hive/serde2/xml/hivexmlserde/1.0.5.3/hivexmlserde-1.0.5.3.jar
+
+gedit products.xml
+<products>
+    <product id="1">
+        <name>iPhone 6</name>
+        <category>phone</category>
+        <price>600</price>
+        <stock>14</stock>
+        <features>
+            <storage>64GB</storage>
+            <battery>20Hrs</battery>
+        </features>
+    </product>
+    <product id="2">
+        <name>iPhone 6 Plus</name>
+        <category>phone</category>
+        <price>800</price>
+        <stock>15</stock>
+        <features>
+            <storage>64GB</storage>
+            <battery>10Hrs</battery>
+        </features>
+    </product>
+    <product id="3">
+        <name>Samsung S6</name>
+        <category>phone</category>
+        <price>650</price>
+        <stock>12</stock>
+        <features>
+            <storage>16GB</storage>
+            <battery>10Hrs</battery>
+        </features>
+    </product>
+</products>
+
+ADD JAR hivexmlserde-1.0.5.3.jar;
+
+CREATE TABLE product_xml(
+id STRING, 
+name STRING, 
+category STRING,
+price DOUBLE,
+stock BIGINT,
+features map<string,string>)
+ROW FORMAT SERDE 'com.ibm.spss.hive.serde2.xml.XmlSerDe'
+WITH SERDEPROPERTIES (
+"column.xpath.id"="/product/@id",
+"column.xpath.name"="/product/name/text()",
+"column.xpath.category"="/product/category/text()",
+"column.xpath.price"="/product/price/text()",
+"column.xpath.stock"="/product/stock/text()",
+"column.xpath.features"="/product/features/*"
+)
+STORED AS
+INPUTFORMAT 'com.ibm.spss.hive.serde2.xml.XmlInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+TBLPROPERTIES (
+"xmlinput.start"="<product id",
+"xmlinput.end"="</product>"
+);
+
+LOAD DATA LOCAL INPATH 'products.xml' INTO TABLE product_xml;
+select * from product_xml;
+
+select * from product_xml
+///////////////////
+
+
+gedit emp.txt
+1	Tanmay	3500.0	101
+2	Sneha	5599.0	101
+3	Avinash	6700.0	102
+4	Manisha	6400.0	103
+5	Sakalya	3200.0	102
+6	Vinit	3200.0	105
+
+gedit dept.txt
+101	Engineering
+102	HR
+103	Finance
+104	Facilities
+
+	
+CREATE TABLE emp(
+ id INT,
+ name STRING,
+ salary DOUBLE,
+ deptId INT)
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY '\t'
+ STORED AS TEXTFILE;
+ 
+ LOAD DATA LOCAL INPATH 'emp.txt' INTO TABLE emp;
+ select * from emp;
+ 
+ CREATE TABLE dept(
+ id INT,
+ name STRING)
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY '|'
+ STORED AS TEXTFILE;
+ LOAD DATA LOCAL INPATH 'dept.txt' INTO TABLE dept;
+ 
+ SELECT e.name, d.name FROM
+emp e JOIN dept d
+ON (e.deptId = d.id);
+
+SELECT e.name, d.name FROM
+emp e LEFT OUTER JOIN dept d
+ON (e.deptId = d.id);
+
+SELECT e.name, d.name FROM
+emp e RIGHT OUTER JOIN dept d
+ON (e.deptId = d.id);
+
+SELECT e.name, d.name FROM
+emp e FULL OUTER JOIN dept d
+ON (e.deptId = d.id);
+
+SELECT e.name, e. salary FROM
+emp e LEFT SEMI JOIN dept d
+ON (e.deptId = d.id);
+
+SELECT * FROM emp e  JOIN dept d ON (e.deptId = d.id);
+
+////////////////Call Data Records (CDR) 
+
+gedit cdr.txt
+CALLER_PHONE_NO|RECEIVER_PHONE_NUMBER|START_TIME|END_TIME|CALL_TYPE
+11111|22222|2015-01-12 01:20:00|2015-01-12 01:30:00|VOICE
+11111|22222|2015-02-12 01:35:00|2015-02-12 01:35:30|VOICE
+11111|22222|2015-02-12 02:20:00|2015-02-12 02:20:00|SMS
+33333|44444|2015-01-12 01:20:00|2015-01-12 01:30:00|VOICE
+11111|33333|2015-05-12 04:02:00|2015-05-12 05:12:00|VOICE
+22222|44444|2015-07-12 06:12:00|2015-07-12 06:12:00|SMS
+22222|33333|2015-08-12 08:45:00|2015-08-12 08:50:00|VOICE
+
+CREATE TABLE CDR(
+caller_phone_no string,
+receiver_phone_no string,
+start_time timestamp,
+end_time timestamp,
+call_type string)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '|'
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH 'cdr.txt' INTO TABLE CDR;	
+
+SELECT caller_phone_no, 
+SUM(UNIX_TIMESTAMP(end_time) - UNIX_TIMESTAMP(start_time))
+FROM cdr
+WHERE call_type = 'VOICE'
+GROUP BY caller_phone_no;
+
+SELECT call_type, count(*) as call_count FROM
+CDR
+GROUP BY call_type
+ORDER  BYcall_count DESC;
+
+///////////////////////////
+http://s3.amazonaws.com/hw-sandbox/tutorial13/SentimentFiles.zip
+hadoop fs -mkdir /data
+hadoop fs -put tweets_raw /data
+hadoop fs -put time_zone_map /data
+hadoop fs -put dictionary /data
+
+
+
+ADD JAR json-serde-1.1.9.9-Hive1.2-jar-with-dependencies.jar;
+CREATE EXTERNAL TABLE tweets_raw (
+id BIGINT,
+created_at STRING,
+source STRING,
+favorited BOOLEAN,
+retweet_count INT,
+retweeted_status STRUCT<
+text:STRING,
+user_rt:STRUCT<screen_name:STRING,name:STRING>>,
+entities STRUCT<
+urls:ARRAY<STRUCT<expanded_url:STRING>>,
+user_mentions:ARRAY<STRUCT<screen_name:STRING,name:STRING>>,
+hashtags:ARRAY<STRUCT<text:STRING>>>,
+text STRING,
+user_struct STRUCT<
+screen_name:STRING,
+name:STRING,
+friends_count:INT,
+followers_count:INT,
+statuses_count:INT,
+verified:BOOLEAN,
+utc_offset:STRING, 
+time_zone:STRING>,
+in_reply_to_screen_name STRING
+)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
+WITH SERDEPROPERTIES ( "mapping.user_rt" = "user", "mapping.user_struct" = "user" ) 
+LOCATION '/data/tweets_raw';
+
+
+CREATE EXTERNAL TABLE dictionary (
+type string,
+lengthint,
+word string,
+pos string,
+stemmed string,
+polarity string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' 
+STORED AS TEXTFILE
+LOCATION '/data/dictionary';
+
+CREATE EXTERNAL TABLE time_zone_map (
+time_zone string,
+country string,
+notes string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' 
+STORED AS TEXTFILE
+LOCATION '/data/time_zone_map';
+
+/////////////////////
+CREATE VIEW tweets_simple AS
+SELECT
+id,
+  cast ( from_unixtime( unix_timestamp(concat( '2013 ', substring(created_at,5,15)), 'yyyy MMM ddhh:mm:ss')) as timestamp) ts,
+text,
+user_struct.time_zone
+FROM tweets_raw;
+
+CREATE VIEW tweets_clean AS
+SELECT
+id,
+ts,
+text,
+m.country
+ FROM tweets_simple t LEFT OUTER JOIN time_zone_map m ON t.time_zone = m.time_zone;
+ 
+ 
+ create view l1 as select id, words from tweets_raw lateral view explode(sentences(lower(text))) dummy as words;
+
+create view l2 as select id, word from l1 lateral view explode( words ) dummy as word ;
+
+create view l3 as select 
+id, 
+    l2.word, 
+cased.polarity
+when  'negative' then -1
+when 'positive' then 1 
+else 0 end as polarity 
+from l2 left outer join dictionary d on l2.word = d.word;
+
+ -- give rights to hive user on tmpdir
+ !hadoop fs -chmod -R 777 /tmp;
+
+
+create table tweets_sentiment stored as RCFILE as select 
+id, 
+case
+when sum( polarity ) > 0 then 'positive' 
+when sum( polarity ) < 0 then 'negative'  
+else 'neutral' end as sentiment 
+from l3 group by id;
+
+
+CREATE TABLE tweets_senti
+STORED AS RCFILE
+AS
+SELECT 
+t.*,
+cases.sentiment
+when 'positive' then 2 
+when 'neutral' then 1 
+when 'negative' then 0 
+end as sentiment  
+FROM tweets_clean t LEFT OUTER JOIN tweets_sentiment s on t.id = s.id;
+
+
+gedit employee1.txt
+1,A,1000
+2,B,2000
+3,C,3000
+4,D,2000
+5,E,1000
+6,F,3000
+7,G,1000
+8,H,3000
+9,I,1000
+10,J,2000
+11,K,1000
+12,L,1000
+13,M,1000
+14,N,3000
+15,O,3000
+16,P,1000
+17,Q,1000
+18,R,1000
+19,S,2000
+20,T,3000
+
+gedit employee2.txt
+1,A,1000
+2,B,2000
+3,C,5000
+4,D,2000
+5,EE,1000
+6,F,3000
+7,G,1000
+8,H,3000
+10,J,2000
+11,K,1000
+12,L,1000
+13,MM,1000
+14,N,3000
+15,O,3000
+16,PQ,1000
+17,Q,1000
+19,S,2000
+20,T,3000
+21,S,2000
+22,T,3000
+23,S,2000
+24,T,3000
+
+CREATE TABLE employee1 (
+id INT,
+name STRING,
+salary BIGINT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH 'emp1.txt' INTO TABLE employee1;
+
+CREATE TABLE employee2 (
+id INT,
+name STRING,
+salary BIGINT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH 'emp2.txt' INTO TABLE employee2;
+
+select 
+case when b1.cdc_codes = 'Updates' then b1.employee1s
+ when b1.cdc_codes = 'NoChange' then b1.employee2s
+ when b1.cdc_codes = 'New' then b1.employee2s
+ when b1.cdc_codes = 'Deletes' then b1.employee1s
+else 'Error' end as fin_cols
+from (select case when e1.id = e2.id and concat(e1.name,e1.salary) = concat(e2.name,e2.salary)     then  'NoChange'
+when e1.id = e2.id and  concat(e1.name,e1.salary) <> concat(e2.name,e2.salary) then  'Updates'
+when e1.id is null then 'New'
+when e2.id is null then 'Deletes'
+else 'Error' end as cdc_codes,
+concat(e1.id,',',e1.name,',',e1.salary) as employee1s,
+concat(e2.id,',',e2.name,',',e2.salary) as employee2s
+from employee1 as e1 full outer join employee2 as e2
+on e1.id = e2.id) as b1
+
+
+
+CREATE TABLE emp1 LIKE employee;
+CREATE TABLE emp2 LIKE employee;
+
+FROM employee
+INSERT INTO TABLE emp1
+SELECT * WHERE id <= 10
+INSERT INTO TABLE emp2 
+SELECT * WHERE id > 10 ;
+
+select * from emp1;
+select * from emp2;
+
+//overwrite
+FROM employee1 
+INSERT INTO TABLE emp1
+SELECT * WHERE id <= 10
+INSERT OVERWRITE DIRECTORY '/data/emp1' 
+SELECT * WHERE id > 10 ;

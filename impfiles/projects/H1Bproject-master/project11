@@ -1,0 +1,1 @@
+sqoop export --connect jdbc:mysql://localhost/question11 --username root --password 'hadoop' --table projectH1B10 --update-mode allowinsert  --export-dir /projectoutput/out11/p* --input-fields-terminated-by '@' ;

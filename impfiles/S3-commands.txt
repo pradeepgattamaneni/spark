@@ -1,0 +1,133 @@
+///////////////Instructions ///////////
+Before dig into ec2-emr commands first you have to configure the credentials 
+
+aws configure 
+//It prompt you to enter below things
+
+AWS Access key ID:****AWS access key***
+AWS secrete key ID:****AWS secret key***
+Default region Name:ap-southeast-1  //for singapore location
+Default output Format:Text // json, text, or table
+
+Next do these operations
+
+/////////////////////Operations ///////////////////
+//List the buckets
+aws s3 ls
+
+//List the folders within the bucket
+aws s3 ls s3://venukatragadda
+
+//List the files within the buckets and folders recursively and human readable
+aws s3 ls s3://venukatragadda --recursive
+aws s3 ls s3://venukatragadda --recursive --human-readable --summarize
+
+//Creates an S3 bucket.(make bucket)
+aws s3 mb s3://venukatragadda
+
+//remove a bucket, but the bucket must be empty to delete.
+aws s3 rb s3://mybucket
+//remove the bucket and internal files also
+aws s3 rb s3://mybucket --force
+
+//deletes a single s3 object:
+aws s3 rm s3://mybucket/test2.txt
+
+//delete all files in S3 bucket
+aws s3 rm s3://mybucket --recursive
+
+//remove all files except few files
+aws s3 rm s3://mybucket/ --recursive --exclude "*.jpg"
+aws s3 rm s3://mybucket/ --recursive --exclude "mybucket/another/*"
+
+
+
+//////////////copy commands ///////////////////////////////////
+
+//Copying a local file to S3
+aws s3 cp test.txt s3://venukatragadda/test2.txt
+
+//Copying a file from S3 to S3
+aws s3 cp s3://venukatragadda/test.txt s3://venukatragadda/test2.txt
+
+//Copying an S3 object to a local file
+aws s3 cp s3://venukatragadda/test.txt test2.txt
+
+//Copying an S3 object from one bucket to another
+aws s3 cp s3://venukatragadda/test.txt s3://venukatragadda2/
+
+//Recursively copying S3 objects to a local directory . means current dir
+aws s3 cp s3://venukatragadda . --recursive
+
+//Recursively copying local files to S3 and exclude some files
+
+aws s3 cp myDir s3://venukatragadda/ --recursive --exclude "*.jpg"
+
+//Recursively copying S3 objects to another bucket
+aws s3 cp s3://venukatragadda/ s3://venukatragadda2/ --recursive --exclude "venukatragadda/another/*"
+
+//You can combine --exclude and --include options to copy only objects that match a pattern, excluding all others: Let example copy only logs
+
+aws s3 cp s3://venukatragadda/logs/ s3://venukatragadda2/logs/ --recursive --exclude "*" --include "*.log"
+
+//Uploading a local file stream to S3
+
+aws s3 cp - s3://venukatragadda/stream.txt
+aws s3 cp -/home/ec2-user/logs s3://venukatragadda/logs
+
+//Downloading an S3 object as a local file stream
+aws s3 cp s3://venukatragadda/stream.txt -
+aws s3 cp s3://venukatragadda/stream.txt -/home/ec2-user/logs
+
+///////////////////////////////Move the data (Cut and paste)////////////
+
+cat > text.txt
+something
+CTRL+D
+//Move the file local to bucket
+aws s3 mv test.txt s3://venukatragadda/test2.txt
+
+//moves an object to a specified bucket and rename
+aws s3 mv s3://mybucket/test.txt s3://mybucket/test2.txt
+
+//moves a single object to a specified file locally:
+aws s3 mv s3://venukatragadda/test2.txt test.txt
+
+//Move the data from one s3 path to another
+aws s3 mv s3://mybucket/test.txt s3://mybucket2/
+
+//move all data to local 
+aws s3 mv s3://mybucket . --recursive
+
+//Move all data from local directory to s3 bucket also exclude few files ending with jpg
+aws s3 mv myDir s3://mybucket/ --recursive --exclude "*.jpg"
+
+// exclude all files from one directory 
+aws s3 mv s3://mybucket/ s3://mybucket2/ --recursive --exclude "mybucket/another/*"
+
+
+/////////////////////////////Sync/////////////////////
+Syncs directories and S3 prefixes. Recursively copies new and updated files from the source directory to the destination
+//syncs objects under a specified prefix and bucket to files in a local directory by uploading the local files to s3
+aws s3 sync . s3://mybucket
+
+//exclude specified files based on exclude option, also allows regex
+aws s3 sync . s3://mybucket --exclude "*.jpg"
+aws s3 sync . s3://mybucket --exclude "."
+aws s3 sync s3://mybucket/ . --exclude "*another/*"
+
+//if any files existing the files will be deleted
+aws s3 sync . s3://mybucket --delete
+
+
+
+//syncs objects under a specified prefix and bucket to objects under another specified prefix and bucket by copying s3 objects.
+
+aws s3 sync s3://mybucket s3://mybucket2
+
+// synch data is copied to local working dir
+aws s3 sync s3://mybucket .
+
+///////////////website//////////////
+Set the website configuration for a bucket.
+

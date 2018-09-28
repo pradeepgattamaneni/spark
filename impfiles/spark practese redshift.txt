@@ -1,0 +1,14 @@
+create table amis(
+snum varchar(64),
+speed varchar(64),
+period varchar(64),
+warning varchar(64),
+pair varchar(64)
+);
+
+select * from amis;
+
+
+
+copy amis from 's3://pradeepbucket2018/input/amis.csv' credentials 'aws_access_key_id=AKIAJCSDTMTIEWC5HOLQ;aws_secret_access_key=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' csv ignoreheader 1  null as
+'\000' ;

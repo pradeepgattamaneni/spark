@@ -1,0 +1,1 @@
+select worksite,Tjob,year from(Select rank() over(partition by year order by Tjob desc) as rank_1,Tjob,worksite,year from(Select count(job_title)as Tjob,worksite,year from h1b_final where job_title="DATA ENGINEER" group by worksite,year order by Tjob) a)b where rank_1=1 and year is not null;
